@@ -45,14 +45,15 @@ The system provides:
 
 ---
 
-## ⚙️ Folder Structure  
+## ⚙️ Folder Structure
+```bash
 project_root/
 ├── frontend/ # React dashboard and tourist app
 ├── backend/ # Node + Express APIs
 ├── ai_service/ # Python AI microservices (CV, NLP, Prediction)
 ├── blockchain_stub/ # Simulated Blockchain ID verification
 └── README.md
-
+```
 
 ---
 
@@ -84,19 +85,19 @@ cd <your-repo-name>
 ```
 ### **3️⃣ Install Dependencies**
 #### `Frontend`
-cd frontend
-npm install
-npm start
+- cd frontend
+- npm install
+- npm start
 
 #### `Backend`
-cd ../backend
-npm install
-npm run dev
+- cd ../backend
+- npm install
+- npm run dev
 
 #### AI Service
-cd ../ai_service
-pip install -r requirements.txt
-python app.py
+- cd ../ai_service
+- pip install -r requirements.txt
+- python app.py
 
 
 ## 🧪 Demo Flow
@@ -108,10 +109,11 @@ python app.py
 5. Tourists can use the AI Chatbot for multilingual help.
 
 ## 👥 Team Members
-Name	            Role
-Malay Kumar Jha	  Project Lead & AI/ML Research Engineer
-Mohit Kumar    	  Blockchain & Backend + AI Integration Developer
-Pipito T Chishi	  Frontend + NLP AI Developer
+| Name | Role |
+|---------|-----------|
+| Malay Kumar Jha |	  Project Lead & AI/ML Research Engineer |
+| Mohit Kumar |   	  Blockchain & Backend + AI Integration Developer |
+| Pipito T Chishi	| Frontend + NLP AI Developer |
 
 ## 🎯 Future Enhancements
 1. Integration with IoT devices for wearable tracking.
@@ -121,7 +123,6 @@ Pipito T Chishi	  Frontend + NLP AI Developer
 
 ## 📜 License
 `This project is developed for AI Practical Lab Project and is intended for educational and research purposes.`
-
 
 ---
 
