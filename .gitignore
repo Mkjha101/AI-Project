@@ -44,6 +44,9 @@ checkpoints/
 *.onnx
 *.bin
 
+# Next.js
+.next/
+
 # Outputs / build
 build/
 dist/
