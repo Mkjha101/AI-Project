@@ -1,0 +1,72 @@
+# OS
+Thumbs.db
+.DS_Store
+
+# Editor/IDE
+.vscode/
+.idea/
+*.suo
+*.user
+*.sln.iml
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.env
+env/
+venv/
+venv_*/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Virtual envs & dependency caches
+env/
+.venv/
+.venv*/ 
+venv/
+.venv
+
+# Data, models, large files
+data/
+datasets/
+models/
+checkpoints/
+*.ckpt
+*.pth
+*.pt
+*.h5
+*.onnx
+*.bin
+
+# Outputs / build
+build/
+dist/
+*.egg-info/
+.eggs/
+*.log
+coverage/
+htmlcov/
+
+# Secrets / config
+*.pem
+*.key
+*.env
+secrets.json
+
+# Git LFS placeholder (if using LFS, tracked patterns go in .gitattributes)
+*.zip
+*.tar.gz
+*.tgz
+
+# Misc
+.cache/
+node_modules/
+npm-debug.log
+yarn-error.log
+.idea/

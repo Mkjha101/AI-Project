@@ -1,0 +1,8 @@
+flask==2.3.3
+# Use the standard library 'hashlib' (no external package required). Removed 'hashlib2' which caused pip errors.
+cryptography==41.0.4
+qrcode[pil]==7.4.2
+requests==2.31.0
+python-dotenv==1.0.0
+werkzeug==2.3.7
+flask-cors==4.0.0
