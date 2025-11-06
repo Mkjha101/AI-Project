@@ -81,6 +81,22 @@ router.post('/link', async (req, res) => {
       }
     });
 
+    // Emit real-time event for new/updated tracking
+    try {
+      const io = req.app.get('io');
+      if (io) {
+        io.emit('tourist:linked', {
+          blockchainId: tracking.blockchainId,
+          phoneNumber: tracking.phoneNumber,
+          touristInfo: tracking.touristInfo,
+          status: tracking.status,
+          issuedAt: tracking.issuedAt
+        });
+      }
+    } catch (e) {
+      console.warn('Socket emit failed (tourist:linked):', e.message);
+    }
+
   } catch (error) {
     console.error('Link error:', error);
     res.status(500).json({ 
@@ -201,6 +217,27 @@ router.post('/location', async (req, res) => {
       source: 'gps',
       recordedAt: new Date()
     });
+
+    // Emit real-time location update
+    try {
+      const io = req.app.get('io');
+      if (io) {
+        io.emit('tourist:location', {
+          blockchainId,
+          phoneNumber: phoneNumber || tracking.phoneNumber,
+          latitude,
+          longitude,
+          accuracy,
+          speed,
+          heading,
+          lastUpdated: tracking.lastUpdated,
+          status: tracking.status,
+          touristInfo: tracking.touristInfo
+        });
+      }
+    } catch (e) {
+      console.warn('Socket emit failed (tourist:location):', e.message);
+    }
 
     res.json({
       message: 'Location updated successfully',

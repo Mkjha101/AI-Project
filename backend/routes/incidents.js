@@ -185,6 +185,16 @@ router.post('/', authenticateToken, [
             data: { incident }
         });
 
+        // Emit real-time incident created
+        try {
+            const io = req.app.get('io');
+            if (io) {
+                io.emit('incident:created', { incident });
+            }
+        } catch (e) {
+            console.warn('Socket emit failed (incident:created):', e.message);
+        }
+
     } catch (error) {
         console.error('Create incident error:', error);
         res.status(500).json({ error: 'Failed to create incident' });
@@ -241,6 +251,16 @@ router.put('/:id', authenticateToken, [
             data: { incident }
         });
 
+        // Emit real-time incident updated
+        try {
+            const io = req.app.get('io');
+            if (io) {
+                io.emit('incident:updated', { incident });
+            }
+        } catch (e) {
+            console.warn('Socket emit failed (incident:updated):', e.message);
+        }
+
     } catch (error) {
         console.error('Update incident error:', error);
         res.status(500).json({ error: 'Failed to update incident' });
@@ -287,6 +307,17 @@ router.post('/:id/actions', authenticateToken, [
                 action: incident.response.actions[incident.response.actions.length - 1]
             }
         });
+
+        // Emit action added event for real-time updates
+        try {
+            const io = req.app.get('io');
+            if (io) {
+                const action = incident.response.actions[incident.response.actions.length - 1];
+                io.emit('incident:action', { incidentId: incident._id, action });
+            }
+        } catch (e) {
+            console.warn('Socket emit failed (incident:action):', e.message);
+        }
 
     } catch (error) {
         console.error('Add action error:', error);

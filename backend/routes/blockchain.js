@@ -3,6 +3,11 @@ const axios = require('axios');
 const { body, validationResult } = require('express-validator');
 
 const router = express.Router();
+const DigitalId = require('../models/DigitalId');
+const User = require('../models/User');
+const Tourist = require('../models/Tourist');
+const TourismOfficer = require('../models/TourismOfficer');
+const Admin = require('../models/Admin');
 
 // Verify Digital ID
 router.post('/verify-id', [
@@ -96,21 +101,79 @@ router.post('/create-id', [
                 documents: documents || []
             }, { timeout: 15000 });
 
-            res.status(201).json({
-                success: true,
-                message: 'Digital ID created successfully',
-                data: {
-                    digitalId: blockchainResponse.data.digital_id,
-                    blockchainHash: blockchainResponse.data.blockchain_hash,
-                    qrCode: blockchainResponse.data.qr_code || null,
-                    publicKey: blockchainResponse.data.public_key || null,
-                    createdAt: blockchainResponse.data.created_at || new Date().toISOString(),
-                    expiresAt: blockchainResponse.data.expires_at || null,
+            // Persist to DB
+            try {
+                const payload = blockchainResponse.data || {};
+                const digitalIdValue = payload.digital_id || payload.digitalId || payload.digitalId;
+                const record = await DigitalId.create({
+                    digitalId: digitalIdValue,
+                    blockchainHash: payload.blockchain_hash || payload.blockchainHash || null,
                     idType: idType || 'tourist_id',
                     status: 'active',
-                    verificationLevel: blockchainResponse.data.verification_level || 'verified'
+                    qrCode: payload.qr_code || null,
+                    publicKey: payload.public_key || null,
+                    createdAt: payload.created_at || new Date().toISOString(),
+                    expiresAt: payload.expires_at || null,
+                    metadata: payload.metadata || {}
+                });
+
+                // Try linking to an existing owner by email if provided
+                if (userData && userData.email) {
+                    const email = userData.email.toLowerCase();
+                    const ownerCandidates = await Promise.all([
+                        User.findOne({ email }),
+                        Tourist.findOne({ email }),
+                        TourismOfficer.findOne({ email }),
+                        Admin.findOne({ email })
+                    ]);
+
+                    const owner = ownerCandidates.find(o => !!o);
+                    if (owner) {
+                        record.ownerType = owner.constructor.modelName || 'Unknown';
+                        record.ownerRef = owner._id;
+                        await record.save();
+
+                        // Update owner record with reference
+                        if (record.ownerType === 'User') {
+                            owner.digitalId = { blockchainId: record.digitalId, verified: true, verifiedAt: new Date() };
+                            await owner.save();
+                        } else if (record.ownerType === 'Tourist') {
+                            owner.blockchainId = record.digitalId;
+                            await owner.save();
+                        } else if (record.ownerType === 'TourismOfficer' || record.ownerType === 'Admin') {
+                            owner.blockchainId = record.digitalId;
+                            await owner.save();
+                        }
+                    }
                 }
-            });
+
+                res.status(201).json({
+                    success: true,
+                    message: 'Digital ID created successfully',
+                    data: {
+                        digitalId: record.digitalId,
+                        blockchainHash: record.blockchainHash,
+                        qrCode: record.qrCode,
+                        publicKey: record.publicKey,
+                        createdAt: record.createdAt,
+                        expiresAt: record.expiresAt,
+                        idType: record.idType,
+                        status: record.status
+                    }
+                });
+
+                // Emit real-time event
+                try {
+                    const io = req.app.get('io');
+                    if (io) io.emit('blockchain:idCreated', { digitalId: record.digitalId, ownerType: record.ownerType, ownerRef: record.ownerRef });
+                } catch (e) {
+                    console.warn('Socket emit failed (blockchain:idCreated):', e.message);
+                }
+
+            } catch (dbErr) {
+                console.error('Failed to persist Digital ID:', dbErr);
+                return res.status(500).json({ error: 'Failed to persist digital ID' });
+            }
 
         } catch (blockchainError) {
             console.error('Blockchain Service Error:', blockchainError.message);
@@ -130,11 +193,75 @@ router.post('/create-id', [
                 note: 'Blockchain service unavailable - using mock ID creation'
             };
 
-            res.status(201).json({
-                success: true,
-                message: 'Digital ID created successfully (mock data)',
-                data: mockCreation
-            });
+            // Persist mock to DB
+            try {
+                const record = await DigitalId.create({
+                    digitalId: mockId,
+                    blockchainHash: mockCreation.blockchainHash,
+                    idType: mockCreation.idType,
+                    status: mockCreation.status,
+                    qrCode: mockCreation.qrCode,
+                    publicKey: mockCreation.publicKey,
+                    createdAt: mockCreation.createdAt,
+                    expiresAt: mockCreation.expiresAt,
+                    metadata: mockCreation.metadata || {}
+                });
+
+                // Attempt owner link by email
+                if (userData && userData.email) {
+                    const email = userData.email.toLowerCase();
+                    const ownerCandidates = await Promise.all([
+                        User.findOne({ email }),
+                        Tourist.findOne({ email }),
+                        TourismOfficer.findOne({ email }),
+                        Admin.findOne({ email })
+                    ]);
+                    const owner = ownerCandidates.find(o => !!o);
+                    if (owner) {
+                        record.ownerType = owner.constructor.modelName || 'Unknown';
+                        record.ownerRef = owner._id;
+                        await record.save();
+
+                        if (record.ownerType === 'User') {
+                            owner.digitalId = { blockchainId: record.digitalId, verified: true, verifiedAt: new Date() };
+                            await owner.save();
+                        } else if (record.ownerType === 'Tourist') {
+                            owner.blockchainId = record.digitalId;
+                            await owner.save();
+                        } else if (record.ownerType === 'TourismOfficer' || record.ownerType === 'Admin') {
+                            owner.blockchainId = record.digitalId;
+                            await owner.save();
+                        }
+                    }
+                }
+
+                res.status(201).json({
+                    success: true,
+                    message: 'Digital ID created successfully (mock data)',
+                    data: {
+                        digitalId: record.digitalId,
+                        blockchainHash: record.blockchainHash,
+                        qrCode: record.qrCode,
+                        publicKey: record.publicKey,
+                        createdAt: record.createdAt,
+                        expiresAt: record.expiresAt,
+                        idType: record.idType,
+                        status: record.status,
+                        note: mockCreation.note
+                    }
+                });
+
+                try {
+                    const io = req.app.get('io');
+                    if (io) io.emit('blockchain:idCreated', { digitalId: record.digitalId, ownerType: record.ownerType, ownerRef: record.ownerRef });
+                } catch (e) {
+                    console.warn('Socket emit failed (blockchain:idCreated):', e.message);
+                }
+
+            } catch (dbErr) {
+                console.error('Failed to persist mock Digital ID:', dbErr);
+                return res.status(500).json({ error: 'Failed to persist digital ID' });
+            }
         }
 
     } catch (error) {
@@ -305,6 +432,28 @@ router.post('/revoke/:digitalId', [
                 }
             });
 
+            // Update DB record if exists
+            try {
+                const record = await DigitalId.findOne({ digitalId });
+                if (record) {
+                    record.status = 'revoked';
+                    record.metadata = record.metadata || {};
+                    record.metadata.revokedBy = revokedBy;
+                    record.metadata.revokeReason = reason;
+                    record.metadata.revokedAt = blockchainResponse.data.revoked_at || new Date().toISOString();
+                    await record.save();
+
+                    try {
+                        const io = req.app.get('io');
+                        if (io) io.emit('blockchain:idRevoked', { digitalId: record.digitalId, revokedBy });
+                    } catch (e) {
+                        console.warn('Socket emit failed (blockchain:idRevoked):', e.message);
+                    }
+                }
+            } catch (dbErr) {
+                console.warn('Failed to update DigitalId record on revoke:', dbErr.message);
+            }
+
         } catch (blockchainError) {
             console.error('Blockchain Service Error:', blockchainError.message);
             
@@ -323,6 +472,27 @@ router.post('/revoke/:digitalId', [
                     note: 'Blockchain service unavailable - using mock data'
                 }
             });
+            // Update DB record if exists (mock path)
+            try {
+                const record = await DigitalId.findOne({ digitalId });
+                if (record) {
+                    record.status = 'revoked';
+                    record.metadata = record.metadata || {};
+                    record.metadata.revokedBy = revokedBy;
+                    record.metadata.revokeReason = reason;
+                    record.metadata.revokedAt = new Date().toISOString();
+                    await record.save();
+
+                    try {
+                        const io = req.app.get('io');
+                        if (io) io.emit('blockchain:idRevoked', { digitalId: record.digitalId, revokedBy });
+                    } catch (e) {
+                        console.warn('Socket emit failed (blockchain:idRevoked):', e.message);
+                    }
+                }
+            } catch (dbErr) {
+                console.warn('Failed to update DigitalId record on revoke (mock path):', dbErr.message);
+            }
         }
 
     } catch (error) {

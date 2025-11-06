@@ -13,6 +13,8 @@ require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const http = require('http');
+const { Server: IOServer } = require('socket.io');
 
 // Security middleware
 app.use(helmet());
@@ -174,7 +176,31 @@ process.on('SIGTERM', () => {
     });
 });
 
-app.listen(PORT, () => {
+// Create HTTP server and attach Socket.IO
+const server = http.createServer(app);
+const io = new IOServer(server, {
+    cors: {
+        origin: ['http://localhost:3000', 'http://localhost:3001'],
+        credentials: true
+    }
+});
+
+// Attach io instance to app for routes to access
+app.set('io', io);
+
+io.on('connection', (socket) => {
+    console.log('🔌 Socket connected:', socket.id);
+
+    socket.on('ping', (data) => {
+        socket.emit('pong', { timestamp: new Date() });
+    });
+
+    socket.on('disconnect', (reason) => {
+        console.log('🔌 Socket disconnected:', socket.id, reason);
+    });
+});
+
+server.listen(PORT, () => {
     console.log(`🚀 Backend server running on port ${PORT}`);
     console.log(`📚 API Documentation: http://localhost:${PORT}/api/docs`);
     console.log(`❤️ Health Check: http://localhost:${PORT}/api/health`);

@@ -1,9 +1,4 @@
 {
-  "/select-role/page": "app/select-role/page.js",
-  "/auth/tourist/login/page": "app/auth/tourist/login/page.js",
   "/page": "app/page.js",
-  "/tourist-tracking/page": "app/tourist-tracking/page.js",
-  "/crowd/page": "app/crowd/page.js",
-  "/admin-dashboard/page": "app/admin-dashboard/page.js",
-  "/auth/tourist/signup/page": "app/auth/tourist/signup/page.js"
+  "/select-role/page": "app/select-role/page.js"
 }

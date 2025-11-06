@@ -14,8 +14,8 @@ __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
-*.env
-env/
+# *.env
+# env/
 venv/
 venv_*/
 pip-log.txt
@@ -35,7 +35,6 @@ venv/
 # Data, models, large files
 data/
 datasets/
-models/
 checkpoints/
 *.ckpt
 *.pth
@@ -59,7 +58,7 @@ htmlcov/
 # Secrets / config
 *.pem
 *.key
-*.env
+# *.env
 secrets.json
 
 # Git LFS placeholder (if using LFS, tracked patterns go in .gitattributes)

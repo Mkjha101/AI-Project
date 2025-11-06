@@ -157,6 +157,20 @@ router.post('/alert', authenticateToken, [
             }
         });
 
+        // Emit real-time geofence alert
+        try {
+            const io = req.app.get('io');
+            if (io) {
+                io.emit('geofence:alert', {
+                    geofenceId: geofence._id,
+                    alert: newAlert,
+                    location: location || null
+                });
+            }
+        } catch (e) {
+            console.warn('Socket emit failed (geofence:alert):', e.message);
+        }
+
     } catch (error) {
         console.error('Create geofence alert error:', error);
         res.status(500).json({ error: 'Failed to create geofence alert' });
