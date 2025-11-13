@@ -48,17 +48,12 @@ if (!fs.existsSync(uploadsDir)) {
 // Static file serving
 app.use('/uploads', express.static(uploadsDir));
 
-// Database connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/smart_tourist_safety', {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-})
-.then(() => {
-    console.log('✅ Connected to MongoDB');
-})
-.catch((error) => {
+// Centralized DB connection helper
+const { connectDB, mongoose: dbMongoose } = require('./utils/db');
+
+// Database connection with retry/backoff
+connectDB().catch((error) => {
     console.error('❌ MongoDB connection error:', error);
-    // Don't exit in development, allow testing without DB
     if (process.env.NODE_ENV === 'production') {
         process.exit(1);
     }

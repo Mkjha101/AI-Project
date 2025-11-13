@@ -127,7 +127,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Redirect based on role
       if (role === 'admin') {
-        router.push('/admin')
+        // Admin UI runs on a separate port/app. Open in new tab.
+        const adminUrl = process.env.NEXT_PUBLIC_ADMIN_URL || 'http://localhost:4000'
+        window.open(adminUrl, '_blank')
       } else if (role === 'tourism-officer') {
         router.push('/officer')
       } else {
@@ -172,7 +174,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Redirect based on role
       if (role === 'admin') {
-        router.push('/admin')
+        const adminUrl = process.env.NEXT_PUBLIC_ADMIN_URL || 'http://localhost:4000'
+        window.open(adminUrl, '_blank')
       } else if (role === 'tourism-officer') {
         router.push('/officer')
       } else {

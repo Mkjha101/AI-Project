@@ -6,7 +6,7 @@ import { Bot, X, Send, Minimize2, Maximize2 } from 'lucide-react';
 export default function FloatingAIChat() {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
-  const [position, setPosition] = useState({ x: window.innerWidth - 400, y: window.innerHeight - 600 });
+  const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [message, setMessage] = useState('');
@@ -70,6 +70,17 @@ export default function FloatingAIChat() {
       }]);
     }, 1000);
   };
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const setInitialPosition = () => {
+      setPosition({ x: window.innerWidth - 400, y: window.innerHeight - 600 });
+    };
+    setInitialPosition();
+    const onResize = () => setInitialPosition();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   if (!isOpen) {
     return (

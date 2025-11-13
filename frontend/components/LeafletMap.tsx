@@ -20,6 +20,7 @@ interface LeafletMapProps {
   center?: [number, number];
   zoom?: number;
   height?: string;
+  adminLocation?: { latitude: number; longitude: number } | null;
 }
 
 const LeafletMap: React.FC<LeafletMapProps> = ({
@@ -29,10 +30,12 @@ const LeafletMap: React.FC<LeafletMapProps> = ({
   center = [28.6139, 77.2090], // New Delhi coordinates
   zoom = 12,
   height = '600px',
+  adminLocation = null,
 }) => {
   const mapRef = useRef<L.Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<{ [key: string]: L.Marker }>({});
+  const adminMarkerRef = useRef<L.Marker | null>(null);
 
   // Initialize map
   useEffect(() => {
@@ -157,11 +160,73 @@ const LeafletMap: React.FC<LeafletMapProps> = ({
     }
   }, [selectedTourist]);
 
+  // Admin location marker
+  useEffect(() => {
+    if (!mapRef.current) return;
+    const map = mapRef.current;
+
+    // If adminLocation is null/undefined, remove existing admin marker
+    if (!adminLocation) {
+      if (adminMarkerRef.current) {
+        adminMarkerRef.current.remove();
+        adminMarkerRef.current = null;
+      }
+      return;
+    }
+
+    const { latitude, longitude } = adminLocation;
+
+    // Create a distinct admin icon
+    const adminIcon = L.divIcon({
+      className: 'admin-marker',
+      html: `
+        <div style="
+          width: 34px;
+          height: 34px;
+          background: linear-gradient(135deg,#2563eb,#06b6d4);
+          border: 3px solid white;
+          border-radius: 50%;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          font-weight: 700;
+        ">A</div>
+      `,
+      iconSize: [34, 34],
+      iconAnchor: [17, 17],
+    });
+
+    if (adminMarkerRef.current) {
+      // update
+      adminMarkerRef.current.setLatLng([latitude, longitude]);
+      adminMarkerRef.current.setIcon(adminIcon);
+    } else {
+      // create
+      adminMarkerRef.current = L.marker([latitude, longitude], { icon: adminIcon })
+        .addTo(map)
+        .bindPopup('<strong>Admin</strong>');
+    }
+
+    // Optionally pan/center map to show admin marker (don't override when tourists present)
+    if (!tourists || tourists.length === 0) {
+      map.setView([latitude, longitude], Math.max(zoom, 13));
+    }
+
+    return () => {
+      if (adminMarkerRef.current) {
+        adminMarkerRef.current.remove();
+        adminMarkerRef.current = null;
+      }
+    };
+  }, [adminLocation, mapRef, zoom, tourists]);
+
   return (
     <div
       ref={mapContainerRef}
-      style={{ height, width: '100%', borderRadius: '8px' }}
-      className="shadow-md border border-gray-200"
+      style={{ height, width: '100%', borderRadius: '8px', zIndex: 0 }}
+      className="shadow-md border border-gray-200 relative"
     />
   );
 };
