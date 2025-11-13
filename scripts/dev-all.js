@@ -9,9 +9,16 @@ const services = [
   {
     name: 'frontend',
     cwd: path.join(root, 'frontend'),
-    // prefer npm script 'dev' if exists, otherwise fallback to npx next dev
     cmd: fs.existsSync(path.join(root, 'frontend', 'package.json')) ? 'npm' : 'npx',
-    args: fs.existsSync(path.join(root, 'frontend', 'package.json')) ? ['run', 'dev'] : ['next', 'dev']
+    args: fs.existsSync(path.join(root, 'frontend', 'package.json')) ? ['run', 'dev'] : ['next', 'dev'],
+    env: { PORT: '3000' }
+  },
+  {
+    name: 'admin-ui',
+    cwd: path.join(root, 'frontend'),
+    cmd: 'npx',
+    args: ['next', 'dev', '-p', '4000'],
+    env: { PORT: '4000' }
   },
   {
     name: 'backend',
@@ -23,7 +30,6 @@ const services = [
     name: 'ai_service',
     cwd: path.join(root, 'ai_service'),
     type: 'python',
-    // we will create venv and then run python app.py
     pythonEntry: 'app.py'
   }
 ];
@@ -87,7 +93,11 @@ function startService(svc) {
       return;
     }
 
-    const child = spawn(svc.cmd, svc.args, { cwd: svc.cwd, shell: true });
+    const child = spawn(svc.cmd, svc.args, { 
+      cwd: svc.cwd, 
+      shell: true,
+      env: Object.assign({}, process.env, svc.env || {})
+    });
     prefixStream(child.stdout, svc.name);
     prefixStream(child.stderr, svc.name);
     child.on('exit', (code) => {

@@ -8,6 +8,14 @@ const adminSchema = new mongoose.Schema({
     required: [true, 'Name is required'],
     trim: true
   },
+  username: {
+    type: String,
+    required: [true, 'Username is required'],
+    unique: true,
+    trim: true,
+    minlength: 3,
+    maxlength: 30
+  },
   email: {
     type: String,
     required: [true, 'Email is required'],
@@ -22,41 +30,96 @@ const adminSchema = new mongoose.Schema({
     unique: true,
     match: [/^[0-9]{10}$/, 'Please provide a valid 10-digit phone number']
   },
+  altPhone: {
+    type: String,
+    sparse: true,
+    match: [/^[0-9]{10}$/, 'Please provide a valid 10-digit alternate phone number']
+  },
   password: {
     type: String,
     required: [true, 'Password is required'],
     minlength: 8,
-    select: false // Don't include password in queries by default
+    select: false
+  },
+  dateOfBirth: {
+    type: Date,
+    required: [true, 'Date of birth is required'],
+    validate: {
+      validator: function(v) {
+        return v < new Date();
+      },
+      message: 'Date of birth cannot be in the present or future'
+    }
+  },
+  gender: {
+    type: String,
+    required: [true, 'Gender is required'],
+    enum: ['male', 'female', 'other', 'prefer-not-to-say']
   },
   
-  // Location Assignment (Admin is bound to specific location)
-  assignedLocation: {
-    name: {
+  // Tourist Place Information
+  touristPlaceName: {
+    type: String,
+    required: [true, 'Tourist place name is required'],
+    unique: true, // One admin per tourist place
+    trim: true
+  },
+  
+  // Region Data (marked by admin on map)
+  regionData: {
+    boundaries: [[Number]], // Array of [lng, lat] coordinates forming polygon
+    center: [Number], // [lng, lat]
+    area: Number, // in square meters
+    maxCapacity: Number, // estimated tourist capacity
+    isSetup: {
+      type: Boolean,
+      default: false
+    }
+  },
+  
+  // Facilities in region (managed by admin)
+  facilities: [{
+    category: {
       type: String,
-      required: [true, 'Location name is required']
+      required: true,
+      enum: [
+        'hospital', 'clinic', 'pharmacy',
+        'police-station', 'fire-station',
+        'restaurant', 'cafe', 'food-stall',
+        'hotel', 'guest-house', 'hostel',
+        'public-toilet', 'washroom',
+        'parking', 'taxi-stand', 'bus-stop',
+        'atm', 'bank',
+        'shop', 'market', 'mall',
+        'temple', 'mosque', 'church', 'gurudwara',
+        'museum', 'monument', 'viewpoint',
+        'information-center', 'tourist-office',
+        'florist', 'photographer',
+        'petrol-pump', 'ev-charging',
+        'other'
+      ]
     },
+    name: String,
+    ownerName: String,
+    phone: String,
     coordinates: {
       type: {
         type: String,
-        enum: ['Point'],
-        default: 'Point'
+        enum: ['Point']
       },
-      coordinates: {
-        type: [Number], // [longitude, latitude]
-        required: true
-      }
+      coordinates: [Number]
     },
-    region: {
-      type: String,
-      required: true
+    verified: {
+      type: Boolean,
+      default: false
     },
-    state: {
-      type: String,
-      required: true
-    },
-    district: String,
-    pincode: String
-  },
+    address: String,
+    notes: String,
+    addedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
   
   // Admin Details
   adminId: {
@@ -84,6 +147,14 @@ const adminSchema = new mongoose.Schema({
     default: 'admin',
     immutable: true
   },
+  isVerified: {
+    type: Boolean,
+    default: false
+  },
+  verificationToken: String,
+  verificationTokenExpiry: Date,
+  passwordResetToken: String,
+  passwordResetExpiry: Date,
   lastLogin: Date,
   loginAttempts: {
     type: Number,
@@ -135,9 +206,13 @@ const adminSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Index for geospatial queries
-adminSchema.index({ 'assignedLocation.coordinates': '2dsphere' });
-adminSchema.index({ email: 1, phone: 1 });
+// Indexes
+adminSchema.index({ 'regionData.center': '2dsphere' });
+adminSchema.index({ email: 1 }, { unique: true });
+adminSchema.index({ phone: 1 }, { unique: true });
+adminSchema.index({ username: 1 }, { unique: true });
+adminSchema.index({ touristPlaceName: 1 }, { unique: true });
+adminSchema.index({ verificationToken: 1 });
 
 // Hash password before saving
 adminSchema.pre('save', async function(next) {

@@ -16,10 +16,21 @@ const touristSchema = new mongoose.Schema({
     trim: true,
     match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email']
   },
+  altEmail: {
+    type: String,
+    lowercase: true,
+    trim: true,
+    sparse: true,
+    match: [/^\S+@\S+\.\S+$/, 'Please provide a valid alternate email']
+  },
   phone: {
     type: String,
     required: [true, 'Phone number is required'],
-    unique: true,
+    match: [/^[0-9]{10}$/, 'Please provide a valid 10-digit phone number']
+  },
+  altPhone: {
+    type: String,
+    sparse: true,
     match: [/^[0-9]{10}$/, 'Please provide a valid 10-digit phone number']
   },
   password: {
@@ -108,13 +119,24 @@ const touristSchema = new mongoose.Schema({
   
   // Profile
   profileImage: String,
-  dateOfBirth: Date,
+  dateOfBirth: {
+    type: Date,
+    required: [true, 'Date of birth is required'],
+    validate: {
+      validator: function(v) {
+        return v < new Date(); // DOB must be in the past
+      },
+      message: 'Date of birth cannot be in the present or future'
+    }
+  },
   gender: {
     type: String,
+    required: [true, 'Gender is required'],
     enum: ['male', 'female', 'other', 'prefer-not-to-say']
   },
   nationality: {
     type: String,
+    required: [true, 'Nationality is required'],
     default: 'Indian'
   },
   address: {
@@ -136,6 +158,14 @@ const touristSchema = new mongoose.Schema({
     enum: ['active', 'inactive', 'suspended'],
     default: 'active'
   },
+  isVerified: {
+    type: Boolean,
+    default: false
+  },
+  verificationToken: String,
+  verificationTokenExpiry: Date,
+  passwordResetToken: String,
+  passwordResetExpiry: Date,
   lastLogin: Date,
   loginAttempts: {
     type: Number,
@@ -201,10 +231,13 @@ const touristSchema = new mongoose.Schema({
 });
 
 // Indexes
-touristSchema.index({ email: 1, phone: 1 });
+touristSchema.index({ email: 1 }, { unique: true });
+touristSchema.index({ phone: 1 }); // Non-unique, limit enforced in code
 touristSchema.index({ username: 1 });
 touristSchema.index({ blockchainId: 1 });
 touristSchema.index({ 'currentVisitLocation.coordinates': '2dsphere' });
+touristSchema.index({ verificationToken: 1 });
+touristSchema.index({ isVerified: 1, verificationTokenExpiry: 1 }); // For cleanup queries
 
 // Hash password before saving
 touristSchema.pre('save', async function(next) {

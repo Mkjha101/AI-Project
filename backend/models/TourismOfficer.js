@@ -16,11 +16,23 @@ const tourismOfficerSchema = new mongoose.Schema({
     trim: true,
     match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email']
   },
+  altEmail: {
+    type: String,
+    lowercase: true,
+    trim: true,
+    sparse: true,
+    match: [/^\S+@\S+\.\S+$/, 'Please provide a valid alternate email']
+  },
   phone: {
     type: String,
     required: [true, 'Phone number is required'],
     unique: true,
     match: [/^[0-9]{10}$/, 'Please provide a valid 10-digit phone number']
+  },
+  altPhone: {
+    type: String,
+    sparse: true,
+    match: [/^[0-9]{10}$/, 'Please provide a valid 10-digit alternate phone number']
   },
   password: {
     type: String,
@@ -163,6 +175,23 @@ const tourismOfficerSchema = new mongoose.Schema({
     enum: ['active', 'inactive', 'suspended'],
     default: 'active'
   },
+  isVerified: {
+    type: Boolean,
+    default: false
+  },
+  verificationToken: String,
+  verificationTokenExpiry: Date,
+  adminApproved: {
+    type: Boolean,
+    default: false
+  },
+  approvedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Admin'
+  },
+  approvedAt: Date,
+  passwordResetToken: String,
+  passwordResetExpiry: Date,
   lastLogin: Date,
   loginAttempts: {
     type: Number,
@@ -175,6 +204,21 @@ const tourismOfficerSchema = new mongoose.Schema({
   
   // Profile
   profileImage: String,
+  dateOfBirth: {
+    type: Date,
+    required: [true, 'Date of birth is required'],
+    validate: {
+      validator: function(v) {
+        return v < new Date();
+      },
+      message: 'Date of birth cannot be in the present or future'
+    }
+  },
+  gender: {
+    type: String,
+    required: [true, 'Gender is required'],
+    enum: ['male', 'female', 'other', 'prefer-not-to-say']
+  },
   joiningDate: {
     type: Date,
     required: true,

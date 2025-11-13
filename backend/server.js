@@ -61,6 +61,7 @@ connectDB().catch((error) => {
 
 // Import routes
 const authRoutes = require('./routes/auth');
+const authV2Routes = require('./routes/auth-v2');
 const multiRoleAuthRoutes = require('./routes/multiRoleAuth');
 const incidentRoutes = require('./routes/incidents');
 const aiRoutes = require('./routes/ai');
@@ -71,6 +72,7 @@ const trackingRoutes = require('./routes/tracking');
 
 // API Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/auth/v2', authV2Routes); // New comprehensive auth system
 app.use('/api/multi-auth', multiRoleAuthRoutes);
 app.use('/api/incidents', incidentRoutes);
 app.use('/api/ai', aiRoutes);
