@@ -1,0 +1,15 @@
+{
+    "name": "ai-project-root",
+    "private": true,
+    "version": "1.0.0",
+    "scripts": {
+        "install:all": "node ./scripts/install-all.js",
+        "dev": "node ./scripts/dev-all.js",
+        "dev:all": "npx concurrently \"cd frontend && npm run dev\" \"cd backend && npm run dev\"",
+        "dev:frontend": "cd frontend && npm run dev",
+        "dev:backend": "cd backend && npm run dev"
+    },
+    "devDependencies": {
+        "concurrently": "^8.2.0"
+    }
+}
