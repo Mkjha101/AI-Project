@@ -9,18 +9,37 @@ const geofenceSchema = new mongoose.Schema({
     description: String,
     type: {
         type: String,
-        enum: ['tourist_zone', 'restricted_area', 'emergency_zone', 'high_traffic', 'monitoring_area'],
+        enum: ['tourist_zone', 'restricted_area', 'emergency_zone', 'high_traffic', 'monitoring_area', 'facility'],
         required: true
+    },
+    // Facility-specific fields
+    category: String, // Hospital, Hotel, Restaurant, etc.
+    ownerName: String,
+    phone: String,
+    address: String,
+    location: {
+        type: {
+            type: String,
+            enum: ['Point'],
+            default: 'Point'
+        },
+        coordinates: [Number] // [longitude, latitude]
+    },
+    isVerified: {
+        type: Boolean,
+        default: false
+    },
+    adminId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Admin'
     },
     geometry: {
         type: {
             type: String,
             enum: ['Polygon', 'Circle'],
-            required: true
         },
         coordinates: {
             type: mongoose.Schema.Types.Mixed, // For Polygon: [[[lng, lat]]], For Circle: [lng, lat]
-            required: true
         },
         radius: Number // Only for Circle type, in meters
     },

@@ -1,4 +1,7 @@
 {
-  "/page": "app/page.js",
-  "/auth/tourist/signup/page": "app/auth/tourist/signup/page.js"
+  "/auth/tourist/signup/page": "app/auth/tourist/signup/page.js",
+  "/auth/officer/login/page": "app/auth/officer/login/page.js",
+  "/auth/admin/login/page": "app/auth/admin/login/page.js",
+  "/auth/officer/signup/page": "app/auth/officer/signup/page.js",
+  "/auth/tourist/login/page": "app/auth/tourist/login/page.js"
 }

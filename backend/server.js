@@ -69,6 +69,7 @@ const geofenceRoutes = require('./routes/geofence');
 const blockchainRoutes = require('./routes/blockchain');
 const dashboardRoutes = require('./routes/dashboard');
 const trackingRoutes = require('./routes/tracking');
+const adminRoutes = require('./routes/admin');
 
 // API Routes
 app.use('/api/auth', authRoutes);
@@ -80,6 +81,7 @@ app.use('/api/geofence', geofenceRoutes);
 app.use('/api/blockchain', blockchainRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/tracking', trackingRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
