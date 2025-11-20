@@ -126,4 +126,3 @@ cd <your-repo-name>
 
 ---
 
-Would you like me to make a **cleanly formatted version with badges (like Python, Node.js, React, MongoDB)** and visuals (emoji headers, shields.io badges, etc.) to make your README look stunning for jury and GitHub visitors?
